@@ -42,7 +42,8 @@ public class Accelerator implements Listener {
     public static final Map<String, Set<Location>> tickLocations = new ConcurrentHashMap<>(16);
     public static final Set<String> extraTickers = new HashSet<>(16);
     public static final BiConsumer<String, Set<SlimefunItem>> onAccelerate = (group, items) -> {
-        if (running.get(group).compareAndSet(false, true)) {
+        var s = running.computeIfAbsent(group, k -> new AtomicBoolean(false));
+        if (s.compareAndSet(false, true)) {
             return;
         }
 
@@ -105,7 +106,16 @@ public class Accelerator implements Listener {
                     }
                     continue;
                 }
-                Accelerates.getTickers().get(item.getId()).tick(location.getBlock(), item, config);
+                BlockTicker ticker = Accelerates.getTickers().get(item.getId());
+                if (ticker != null) {
+                    try {
+                        ticker.tick(location.getBlock(), item, config);
+                    } catch (Throwable e) {
+                        SlimefunAccelerator.getInstance().getLogger().severe("An error occurred while ticking " + item.getId());
+                        SlimefunAccelerator.getInstance().getLogger().severe(e.toString());
+                        e.printStackTrace();
+                    }
+                }
             } else {
                 Config config = BlockStorage.getLocationInfo(location);
                 if (config == null) {
@@ -119,7 +129,16 @@ public class Accelerator implements Listener {
                     }
                     continue;
                 }
-                Accelerates.getTickers().get(item.getId()).tick(location.getBlock(), item, config);
+                BlockTicker ticker = Accelerates.getTickers().get(item.getId());
+                if (ticker != null) {
+                    try {
+                        ticker.tick(location.getBlock(), item, config);
+                    } catch (Throwable e) {
+                        SlimefunAccelerator.getInstance().getLogger().severe("An error occurred while ticking " + item.getId());
+                        SlimefunAccelerator.getInstance().getLogger().severe(e.toString());
+                        e.printStackTrace();
+                    }
+                }
             }
         }
 
